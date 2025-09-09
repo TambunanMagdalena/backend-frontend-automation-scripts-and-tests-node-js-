@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data Tersimpan</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h2>Data Tersimpan</h2>
+    <div id="dataContainer"></div>
+    <button onclick="window.location.href='form.html'">Tambah Data Baru</button>
+    <div id="updateSection" style="display: none; margin-top: 30px">
+      <h3>Update Data</h3>
+      <form id="updateForm">
+        <input type="hidden" id="updateId" />
+        <input type="text" id="updateNama" placeholder="Nama" required /><br />
+        <input
+          type="text"
+          id="updateKelas"
+          placeholder="Kelas"
+          required
+        /><br />
+        <input type="text" id="updateRole" placeholder="Role" required /><br />
+        <button type="submit">Update</button>
+        <button type="button" id="cancelUpdateBtn">Batal</button>
+      </form>
+    </div>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+
+      function showUpdateForm(data) {
+        document.getElementById("updateSection").style.display = "block";
+        document.getElementById("updateId").value = data.uuid;
+        document.getElementById("updateNama").value = data.nama;
+        document.getElementById("updateKelas").value = data.kelas;
+        document.getElementById("updateRole").value = data.role;
+      }
+
+      document.getElementById("cancelUpdateBtn").onclick = function () {
+        document.getElementById("updateSection").style.display = "none";
+      };
+
+      document
+        .getElementById("updateForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const uuid = document.getElementById("updateId").value;
+          const nama = document.getElementById("updateNama").value;
+          const kelas = document.getElementById("updateKelas").value;
+          const role = document.getElementById("updateRole").value;
+          const res = await fetch(`/api/data/${uuid}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nama, kelas, role }),
+          });
+          if (res.ok) {
+            alert("Data berhasil diupdate!");
+            document.getElementById("updateSection").style.display = "none";
+            getAllData();
+          } else {
+            alert("Gagal update data!");
+          }
+        });
+
+      async function deleteData(uuid) {
+        if (confirm("Yakin ingin menghapus data ini?")) {
+          const res = await fetch(`/api/data/${uuid}`, { method: "DELETE" });
+          if (res.ok) {
+            alert("Data berhasil dihapus!");
+            getAllData();
+          } else {
+            alert("Gagal menghapus data!");
+          }
+        }
+      }
+
+      function setStatus(uuid, status) {
+        fetch(`/api/data/${uuid}/status`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status }),
+        })
+          .then((res) => res.json())
+          .then((response) => {
+            if (response.success) {
+              alert("Status berhasil diubah!");
+              getAllData();
+            } else {
+              alert("Gagal mengubah status!");
+            }
+          });
+      }
+
+      if (id) {
+        // Tampilkan detail data
+        fetch(`/api/data/${id}`)
+          .then((res) => res.json())
+          .then((response) => {
+            const data = response.data;
+            if (!data) {
+              document.getElementById(
+                "dataContainer"
+              ).innerHTML = `<p>Data tidak ditemukan</p>`;
+            } else {
+              let html =
+                "<table border='1' cellpadding='8'><tr><th>ID</th><th>Nama</th><th>Kelas</th><th>Role</th><th>Status</th></tr>";
+              html += `
+                <tr>
+                  <td>${data.uuid}</td>
+                  <td>${data.nama}</td>
+                  <td>${data.kelas}</td>
+                  <td>${data.role}</td>
+                  <td>${data.activeStatus || "-"}</td>
+                </tr>
+              `;
+              html += "</table>";
+              document.getElementById("dataContainer").innerHTML = html;
+            }
+          });
+      } else {
+        // Tampilkan semua data dengan tombol update
+        async function getAllData() {
+          const res = await fetch("/api/data");
+          const response = await res.json();
+          const data = response.data || [];
+          let html =
+            "<table border='1' cellpadding='8'><tr><th>ID</th><th>Nama</th><th>Kelas</th><th>Role</th><th>Status</th><th>Aksi</th></tr>";
+          data.forEach((item) => {
+            html += `
+              <tr>
+                <td>${item.uuid}</td>
+                <td>${item.nama}</td>
+                <td>${item.kelas}</td>
+                <td>${item.role}</td>
+                <td>${item.activeStatus || "-"}</td>
+                <td>
+                  <button onclick='window.showUpdateForm(${JSON.stringify(
+                    item
+                  )})'>Update</button>
+                  <button onclick='window.deleteData(${JSON.stringify(
+                    item.uuid
+                  )})' style="background:#e74c3c;color:white;">Delete</button>
+                  <button onclick='window.setStatus("${item.uuid}", "${
+              item.activeStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE"
+            }")' style="background:#3498db;color:white;">
+                    ${
+                      item.activeStatus === "ACTIVE"
+                        ? "Nonaktifkan"
+                        : "Aktifkan"
+                    }
+                  </button>
+                </td>
+              </tr>
+            `;
+          });
+          html += "</table>";
+          document.getElementById("dataContainer").innerHTML = html;
+        }
+        window.showUpdateForm = showUpdateForm;
+        window.deleteData = deleteData;
+        window.setStatus = setStatus;
+        getAllData();
+      }
+    </script>
+  </body>
+</html>
