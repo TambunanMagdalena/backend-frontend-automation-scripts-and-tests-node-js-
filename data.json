@@ -76,5 +76,18 @@
     "updatedBy": null,
     "deletedBy": null,
     "activeStatus": "ACTIVE"
+  },
+  {
+    "uuid": "3140dbe9-8cb3-4921-8ca6-daee16364002",
+    "nama": "rani",
+    "kelas": "string",
+    "role": "linux",
+    "createdAt": "2025-09-09T04:32:31.003Z",
+    "updatedAt": null,
+    "deletedAt": null,
+    "createdBy": "admin",
+    "updatedBy": null,
+    "deletedBy": null,
+    "activeStatus": "ACTIVE"
   }
 ]
